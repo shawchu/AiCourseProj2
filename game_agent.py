@@ -220,24 +220,38 @@ class CustomPlayer:
                 
                 #  Start recursing the minimax from here
                 tscore, move = self.minimax(tboard, depth, not maximizing_player)
+                print("tscore ", tscore)
                 bdict.update({m : tscore})
                 
                 #if tscore > bscore:
                 #    bscorelist.append(tscore)
-                
+            
+            print("bdict ", bdict)    
             move = max(bdict, key=bdict.get)
             tscore = bdict[move]
             return tscore, move
-                
-        #print(game.active_player())
+        
+        #  should only get to below when have recursed down to 2nd to last layer        
+        print(game.__active_player__)
+        print("maxi  ", maximizing_player)
         print(game.to_string())
         
         print(legal_moves)
-        for m in legal_moves:
-            
-            #  The score function is still from point of view of CustomPlayer()
+#        for m in legal_moves:
+#            
+#            #  The score function is still from point of view of CustomPlayer()
+#            tscore, move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
+#            print("lowest level tscore ", tscore, "move  ", move)
+        
+        #  The score function is still from point of view of CustomPlayer()
+        if maximizing_player:
             tscore, move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
-            print("tscore ", tscore)
+        else:
+            tscore, move = min([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
+#        tscore, move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
+#        print("lowest level tscore max ", tscore, "move  ", move)
+#        tscore, move = min([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
+#        print("lowest level tscore min ", tscore, "move  ", move)
         return tscore, move
     
 #==============================================================================
