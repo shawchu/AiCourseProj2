@@ -149,6 +149,8 @@ class CustomPlayer:
         # Return the best move from the last completed search iteration
         
         gscore, gmove = self.minimax(game, 3, maximizing_player=True)
+        #gscore, gmove = self.alphabeta(game, 3, maximizing_player=True)
+        
         return gmove
         #return self.minimax(game, 3, maximizing_player=True)
         
@@ -194,6 +196,8 @@ class CustomPlayer:
         
         #print("blah")
         legal_moves = game.get_legal_moves()
+        print("depth ", depth)
+        print("legal_moves ", legal_moves)
         
         if not legal_moves:
             return (-1, -1)
@@ -211,32 +215,37 @@ class CustomPlayer:
         while depth > 2:
             depth -= 1
             for m in legal_moves:
+                print("m ", m)
                 tboard = game.copy()
                 tboard.apply_move(m)
                 #  After applying the move, the active player will change to other player for
                 #   next player down
-                #print(tboard.__active_player__)
-                #break
                 
                 #  Start recursing the minimax from here
+                
                 tscore, move = self.minimax(tboard, depth, not maximizing_player)
-                print("tscore ", tscore)
+                #print("tscore ", tscore)
                 bdict.update({m : tscore})
                 
                 #if tscore > bscore:
                 #    bscorelist.append(tscore)
             
-            print("bdict ", bdict)    
-            move = max(bdict, key=bdict.get)
+            #print("bdict ", bdict)
+            if maximizing_player:
+                move = max(bdict, key=bdict.get)
+                
+            else:
+                move = min(bdict, key=bdict.get)
             tscore = bdict[move]
             return tscore, move
         
         #  should only get to below when have recursed down to 2nd to last layer        
-        print(game.__active_player__)
-        print("maxi  ", maximizing_player)
-        print(game.to_string())
         
-        print(legal_moves)
+#        print(game.__active_player__)
+#        print("maxi  ", maximizing_player)
+#        print(game.to_string())
+#        
+#        print(legal_moves)
 #        for m in legal_moves:
 #            
 #            #  The score function is still from point of view of CustomPlayer()
@@ -251,7 +260,7 @@ class CustomPlayer:
 #        tscore, move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
 #        print("lowest level tscore max ", tscore, "move  ", move)
 #        tscore, move = min([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
-#        print("lowest level tscore min ", tscore, "move  ", move)
+        #print("lowest level tscore min ", tscore, "move  ", move)
         return tscore, move
     
 #==============================================================================
@@ -319,4 +328,143 @@ class CustomPlayer:
             raise Timeout()
 
         # TODO: finish this function!
+        
+        legal_moves = game.get_legal_moves()
+        if not legal_moves:
+            return (-1, -1)
+        #ascore = float("-inf")
+        #bscore = float("inf")
+        bdict = {}
+
+
+        #  going to assume that depth will be passed recursively as the minimax function
+        #   is assumed to be called recursively as many times as (depth-1)
+        #  When reached 2nd to last layer, can run calculations on last layer
+        while depth > 1:
+            depth -= 1
+            #if beta < float("inf"):
+            for m in legal_moves:
+                tboard = game.copy()
+                tboard.apply_move(m)
+                #  After applying the move, the active player will change to other player for
+                #   next layer down
+                
+                #  Start recursing the alphabeta from here
+                tscore, move = self.alphabeta(tboard, depth, alpha, beta, not maximizing_player)
+                #print("tscore ", tscore)
+                if not maximizing_player:
+                    if alpha > float("-inf"):
+                        if tscore < alpha:
+                            alpha = tscore
+                            bdict.update({m : tscore})
+                        else:
+                            break
+                            
+                    #  then first time going down the layers, whatever is returned is alpha firstly
+                    else:
+                        alpha = tscore
+                        bdict.update({m : tscore})
+                        
+                else:
+                    if beta < float("-inf"):
+                        if tscore > beta:
+                            beta = tscore
+                            bdict.update({m : tscore})
+                    
+                    #  then first time going down the layers, whatever is returned is alpha firstly
+                    else:
+                        beta = tscore
+                        bdict.update({m : tscore})
+                        
+#                    if tscore <= beta:
+#                        beta = tscore
+#                        move = m
+                        #break
+                        #bdict.update({m : tscore})
+                
+                        #print("bdict ", bdict)    
+                        #move = max(bdict, key=bdict.get)
+                        #tscore = bdict[move]
+                    
+            if maximizing_player:
+                tscore, move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
+            else:
+                tscore, move = min([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
+
+            return tscore, move
+        
+        #  should only get to below when have recursed down to last layer        
+        #print(game.__active_player__)
+        #print("maxi  ", maximizing_player)
+        #print(game.to_string())
+        
+        #print(legal_moves)
+#        for m in legal_moves:
+#            
+#            #  The score function is still from point of view of CustomPlayer()
+#            tscore, move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
+#            print("lowest level tscore ", tscore, "move  ", move)
+        
+        #  The score function is still from point of view of CustomPlayer()
+#        if maximizing_player:
+#            tscore, move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
+#        else:
+#            tscore, move = min([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
+
+        #  for now, assume that it is a maximising layer 
+        if maximizing_player:
+            if alpha > float("-inf"):
+                ascore = float("-inf")
+                for m in legal_moves:    
+                    tscore = self.score(game.forecast_move(m), self)
+                    if tscore >= alpha:
+                        #print("about to break due to alpha")
+                        ascore = tscore
+                        break
+                    if tscore > ascore:
+                        ascore = tscore
+                
+                return ascore, m
+            
+            #  If alpha is -inf, have to go through all of the last options
+            #   will set the alpha value
+            else:
+                tscore, move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
+                alpha = tscore
+                return tscore, move
+            
+        else:
+            if beta < float("inf"):
+                bscore = float("inf")
+                for m in legal_moves:
+                    tscore = self.score(game.forecast_move(m), self)
+                    if tscore <= beta:
+                        bscore = tscore
+                        break
+                    if tscore < bscore:
+                        bscore = tscore
+                return bscore, m
+            else:
+                tscore, move = min([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
+                beta = tscore
+                return tscore, move
+            
+#            tscore = self.score(game.forecast_move(legal_moves[0]))
+#            if tscore >= alpha:
+#                return tscore
+#            
+#            if maximizing_player:
+#                #tscore, move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
+#                for m in legal_moves:
+#                    ascore = self.score(game.forecast_move(m))
+#                    if ascore >= alpha:
+#                        break
+#                    if ascore >= tscore:
+#                        tscore = ascore
+
+#            alpha = tscore
+#        return tscore, move
+
+        
+        
         raise NotImplementedError
