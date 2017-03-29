@@ -150,17 +150,18 @@ class CustomPlayer:
                 cdepth = 0
                 while cdepth < 1e3:
                     gscore, gmove = self.minimax(game, int(cdepth), True)
-                    #print("   cdepth=", cdepth, " idscore=", idscore, " idmove=", idmove)
+                    print("   cdepth=", cdepth, " gscore=", gscore, " gmove=", gmove)
                     cdepth += 1
                     if self.time_left() < self.TIMER_THRESHOLD:
-                        return gscore, gmove
+                        return gmove
             
             else:
                 gscore = float("-inf")
                 gmove = (-1,-1)
                 #print("game=", game)
                 #print("search_depth=", self.search_depth)
-                gscore, gmove = self.minimax(game, 3, True)
+                gscore, gmove = self.minimax(game, self.search_depth, True)
+                print(" gscore=", gscore, " gmove=", gmove)
                 return gmove
             
             #gscore, gmove = self.minimax(game, 1, maximizing_player=True)
@@ -176,7 +177,7 @@ class CustomPlayer:
                 return legal_moves[0]
             else:
                 return gmove
-            pass
+            #pass
 
         # Return the best move from the last completed search iteration
         
@@ -230,11 +231,16 @@ class CustomPlayer:
             #print("legal_moves=", legal_moves, " depth=", depth)
                     
         if not legal_moves or depth <= 0:
-            #print("depth= ", depth, " ", game.__inactive_player__, " score=", self.score(game, game.__inactive_player__))
+            print("depth= ", depth, " ", self, " score=", self.score(game, self), " posit=", game.get_player_location(self))
             if maximizing_player:
                 tscore = self.score(game, game.__active_player__)
             else:
                 tscore = self.score(game, game.__inactive_player__)
+            
+            if self.time_left() < self.TIMER_THRESHOLD:
+                raise Timeout()            
+
+            #tscore = self.score(game, self)
             #print(game.to_string())
             #print("depth 0 score=", tscore)
             return tscore, (-1, -1)
@@ -249,8 +255,10 @@ class CustomPlayer:
             #tscore, move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
             
             #print("max_player=", maximizing_player)
-            #print("depth=", depth, " legal_moves=", legal_moves)
-            
+            print("depth=", depth, " legal_moves=", legal_moves)
+            if self.time_left() < self.TIMER_THRESHOLD:
+                raise Timeout()
+                
             if maximizing_player:
                 tdict={}
                 tscore = float("-inf")
