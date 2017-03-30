@@ -45,10 +45,24 @@ def custom_score(game, player):
     if game.is_winner(player):
         return float("inf")
 
+#    own_moves = len(game.get_legal_moves(player))
+#    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+#    return float(own_moves - opp_moves)
+    
+    #  heuristic number 1
+    
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    return float(own_moves - opp_moves)
     
+    centrearea = [(2,2), (2,3), (2,4), (3,2), (3,3), (3,4), (4,2), (4,3), (4,4)]
+    own_posit = game.get_player_location(player)
+    if own_posit in centrearea:
+        return float(own_moves - opp_moves) + 2
+    else:
+        return float(own_moves - opp_moves)
+
+
+
     raise NotImplementedError
 
 
@@ -150,7 +164,7 @@ class CustomPlayer:
                 cdepth = 0
                 while cdepth < 1e3:
                     gscore, gmove = self.minimax(game, int(cdepth), True)
-                    print("   cdepth=", cdepth, " gscore=", gscore, " gmove=", gmove)
+                    #print("   cdepth=", cdepth, " gscore=", gscore, " gmove=", gmove)
                     cdepth += 1
                     if self.time_left() < self.TIMER_THRESHOLD:
                         return gmove
@@ -161,14 +175,11 @@ class CustomPlayer:
                 #print("game=", game)
                 #print("search_depth=", self.search_depth)
                 gscore, gmove = self.minimax(game, self.search_depth, True)
-                print(" gscore=", gscore, " gmove=", gmove)
+                #print(" gscore=", gscore, " gmove=", gmove)
                 return gmove
             
             #gscore, gmove = self.minimax(game, 1, maximizing_player=True)
-#            alpha_init = float("-inf")
-#            beta_init = float("inf")
-#            gscore, gmove = self.alphabeta(game, 3, alpha_init, beta_init, maximizing_player=True)
-#            #pass
+
 
         except Timeout:
             # Handle any actions required at timeout, if necessary
@@ -231,16 +242,16 @@ class CustomPlayer:
             #print("legal_moves=", legal_moves, " depth=", depth)
                     
         if not legal_moves or depth <= 0:
-            print("depth= ", depth, " ", self, " score=", self.score(game, self), " posit=", game.get_player_location(self))
-            if maximizing_player:
-                tscore = self.score(game, game.__active_player__)
-            else:
-                tscore = self.score(game, game.__inactive_player__)
+            #print("depth= ", depth, " ", self, " score=", self.score(game, self), " posit=", game.get_player_location(self))
+#            if maximizing_player:
+#                tscore = self.score(game, game.__active_player__)
+#            else:
+#                tscore = self.score(game, game.__inactive_player__)
             
             if self.time_left() < self.TIMER_THRESHOLD:
                 raise Timeout()            
 
-            #tscore = self.score(game, self)
+            tscore = self.score(game, self)
             #print(game.to_string())
             #print("depth 0 score=", tscore)
             return tscore, (-1, -1)
@@ -255,12 +266,11 @@ class CustomPlayer:
             #tscore, move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
             
             #print("max_player=", maximizing_player)
-            print("depth=", depth, " legal_moves=", legal_moves)
+            #print("depth=", depth, " legal_moves=", legal_moves)
             if self.time_left() < self.TIMER_THRESHOLD:
                 raise Timeout()
                 
             if maximizing_player:
-                tdict={}
                 tscore = float("-inf")
                 move = (-1,-1)
                 for m in legal_moves:
@@ -298,28 +308,6 @@ class CustomPlayer:
             
         #depth_search(self, game, depth, maximizing_player=True)
         
-#        legal_moves = game.get_legal_moves()
-#        if not legal_moves or depth <= 0:
-#            #print("depth= ", depth, " ", game.__inactive_player__, " score=", self.score(game, game.__inactive_player__))
-#            return self.score(game, game.__inactive_player__), (-1,-1)
-        
-        #print("Interative=", self.iterative)
-#        if self.iterative:
-#            for cdepth in range(depth+3):
-#                #print("cdepth=", cdepth)
-#                idscore, idmove = depth_search(self, game, int(cdepth), maximizing_player)
-#                #print("   cdepth=", cdepth, " idscore=", idscore, " idmove=", idmove)
-#                #print(self.time_left())
-#                if self.time_left() < self.TIMER_THRESHOLD:
-#                    return idscore, idmove
-#            
-#            
-#            
-#            return idscore, idmove
-#        else:
-#            idscore, idmove = depth_search(self, game, depth, maximizing_player)
-#            return idscore, idmove
-#        raise NotImplementedError
 
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
@@ -365,80 +353,7 @@ class CustomPlayer:
 
         # TODO: finish this function!
         
-#        legal_moves = game.get_legal_moves()
-#        if not legal_moves:
-#            return (-1, -1)
-#        #ascore = float("-inf")
-#        #bscore = float("inf")
-#        bdict = {}
 
-        def depab_search(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
-            legal_moves = game.get_legal_moves()
-            if not legal_moves or depth <= 0:
-                #print(self.score(game, game.__active_player__))
-                if maximizing_player:
-                    tscore = self.score(game, game.__active_player__)
-                else:
-                    tscore = self.score(game, game.__inactive_player__)
-                return tscore, (-1, -1)
-            
-            while depth > 0:
-                #tscore, move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
-
-                if maximizing_player:
-                    tdict={}
-                    tscore = float("-inf")
-                    v = float("-inf")
-                    #m = (-1,-1)
-                    move = (-1,-1)
-                    #print("legal_moves=", legal_moves)
-                    for m in legal_moves:
-                        #tboard = game.copy()
-                        #tboard.apply_move(m)
-                        tboard = game.forecast_move(m)
-                        v, move_m = depab_search(self, tboard, depth-1, alpha, beta, not maximizing_player)
-                        #tdict.update({m : v})
-                        if v > tscore:
-                            tscore = v
-                            move = m
-                        if tscore >= beta:
-                            return tscore, move
-                            #break
-                        alpha = max(alpha, v)
-                        
-                        
-                    #print("alpha=", alpha)
-      
-                    #move = max(tdict, key=tdict.get)
-                    #tscore = tdict[move]
-                    #tscore = v
-                    return tscore, move
-
-                else:
-                    tdict={}
-                    tscore = float("inf")
-                    v = float("inf")
-                    #m = (-1,-1)
-                    move = (-1,-1)
-                    for m in legal_moves:
-                        #tboard = game.copy()
-                        #tboard.apply_move(m)
-                        tboard = game.forecast_move(m)
-                        v, move_m = depab_search(self, tboard, depth-1, alpha, beta, not maximizing_player)
-                        #tdict.update({m : v})
-                        if tscore <= v:
-                            tscore = v
-                            move = m
-                        if tscore <= alpha:
-                            return tscore, move
-                        beta = min(beta, v)
-                        #if v < beta:
-                        #    move = m
-                    
-                    #move = min(tdict, key=tdict.get)
-                    #tscore = tdict[move]
-                    return tscore, move
-                    #return v, m
 
         def max_val(self, game, depth, alpha=float("-inf"), beta=float("inf")):               
             legal_moves = game.get_legal_moves()
@@ -508,23 +423,6 @@ class CustomPlayer:
         abval, abmove = max_val(self, game, depth, float("-inf"), float("inf"))
         return abval, abmove
         
-#        for cdepth in range(depth+1):
-#            #print("cdepth=", cdepth, " alpha=", alpha, " beta=", beta)
-#            idscore, idmove = depab_search(self, game, int(cdepth), alpha, beta, not maximizing_player)
-#            #print("cdepth=", cdepth, " idscore=", idscore, " idmove=", idmove)
-#            #print(self.time_left())
-#            if self.time_left() < self.TIMER_THRESHOLD:
-#                return idscore, idmove
-#        return idscore, idmove
 
-        
-
-            
-        #pass
-
-
-
-
-        
         
         #raise NotImplementedError
