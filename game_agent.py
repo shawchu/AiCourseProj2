@@ -37,33 +37,91 @@ def custom_score(game, player):
         The heuristic value of the current game state to the specified player.
     """
 
-    #  copied from the sample_players.py
-    
     if game.is_loser(player):
         return float("-inf")
 
     if game.is_winner(player):
         return float("inf")
 
-#    own_moves = len(game.get_legal_moves(player))
-#    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-#    return float(own_moves - opp_moves)
+    #  the calculation of number of moves of self vs opponent is
+    #   copied from the sample_players.py
+    #own_moves = len(game.get_legal_moves(player))
+    #opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    #return float(own_moves - opp_moves)
     
     #  heuristic number 1
+    #   consider that if end on the centre grid of squares 2 squares
+    #   away from edge as desirable. Adds 2 to score if in centre area/grid
+    def use_h1(game, player):
+        own_moves = len(game.get_legal_moves(player))
+        opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+        
+        centre_area = []
+        #  have to check if game board is fact big enough for a centre area
+        if game.width > 4 and game.height > 4:
+            cwidth = list(range(2, (game.width - 2)))
+            cheight = list(range(2, (game.height - 2)))
+            for i in cwidth:
+                for j in cheight:
+                    centre_area.append((i, j))
+            
+            #  will only run below check if there is a centre area
+            own_posit = game.get_player_location(player)
+            if own_posit in centre_area:
+                return float(own_moves - opp_moves) + 2
+            else:
+                return float(own_moves - opp_moves)
     
-    own_moves = len(game.get_legal_moves(player))
-    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+        else:
+            return float(own_moves - opp_moves)
+
+
+    #  heuristic number 2
+    #   consider that if end up on outer band of squares 2 squares
+    #   away from edge as being undesirable. Subtract 2 from score if in 
+    #   this outer band close to board edge
+    def use_h2(game, player):
+        own_moves = len(game.get_legal_moves(player))
+        opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+        
+        centre_area = []
+        if game.width > 4 and game.width > 4:
+            cwidth = list(range(2, (game.width - 2)))
+            cheight = list(range(2, (game.height - 2)))
+            for i in cwidth:
+                for j in cheight:
+                    centre_area.append((i, j))
+        
+        whole_grid = []
+        for i in range(0, game.width):
+            for j in range(0, game.height):
+                whole_grid.append((i,j))
+                
+        out_band = [x for x in whole_grid if x not in centre_area]
+        
+        own_posit = game.get_player_location(player)
+        if own_posit in out_band:
+            return float(own_moves - opp_moves) - 2
+        else:
+            return float(own_moves - opp_moves)
     
-    centrearea = [(2,2), (2,3), (2,4), (3,2), (3,3), (3,4), (4,2), (4,3), (4,4)]
-    own_posit = game.get_player_location(player)
-    if own_posit in centrearea:
-        return float(own_moves - opp_moves) + 2
-    else:
-        return float(own_moves - opp_moves)
-
-
-
-    raise NotImplementedError
+        
+    #  heuristic number 3
+    #   consider that if one or more of own moves can block opponent's moves
+    #   The number of own moves which could be possible blocking moves 
+    #   is added to score 
+    def use_h3(game, player):
+        own_pmoves = game.get_legal_moves(player)
+        opp_pmoves = game.get_legal_moves(game.get_opponent(player))
+        blockmoves = len([x for x in own_pmoves if x in opp_pmoves])
+        return float(len(own_pmoves) - len(opp_pmoves)) + blockmoves
+    
+    
+    return use_h1(game, player)             
+    #return use_h2(game, player)             
+    #return use_h3(game, player)             
+                 
+    #raise NotImplementedError
 
 
 class CustomPlayer:
@@ -143,14 +201,17 @@ class CustomPlayer:
 
         self.time_left = time_left
 
-        # TODO: finish this function!
+        # TODO: finish this function for the assignment
 
         # Perform any required initializations, including selecting an initial
         # move from the game board (i.e., an opening book), or returning
         # immediately if there are no legal moves
         
         gscore = float("-inf")
-        gmove = (-1,-1)
+        if len(legal_moves) > 0:
+            gmove = legal_moves[0]
+        else:
+            gmove = (-1,-1)
         
         try:
             # The search method call (alpha beta or minimax) should happen in
@@ -158,44 +219,63 @@ class CustomPlayer:
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
             
-            if self.iterative:
-                
-                
-                cdepth = 0
-                while cdepth < 1e3:
-                    gscore, gmove = self.minimax(game, int(cdepth), True)
-                    #print("   cdepth=", cdepth, " gscore=", gscore, " gmove=", gmove)
-                    cdepth += 1
-                    if self.time_left() < self.TIMER_THRESHOLD:
-                        return gmove
+            #  following is opening book moves for use with heuristic 3
+            #  if move is available in centre grid area, truncate the 
+            #  legal moves to those only in the centre grid.
+#            centre_area = []
+#            if game.width > 4 and game.width > 4:
+#                cwidth = list(range(2, (game.width - 2)))
+#                cheight = list(range(2, (game.height - 2)))
+#                for i in cwidth:
+#                    for j in cheight:
+#                        centre_area.append((i, j))
+#            
+#                cent_moves = []
+#                for m in legal_moves:
+#                    if m in centre_area:
+#                        cent_moves.append(m)
+#                if len(cent_moves) > 0:
+#                    legal_moves = cent_moves
             
+            if self.method == 'minimax':
+                if self.iterative:
+                    cdepth = 0
+                    while cdepth < float("inf"):
+                        gscore, gmove = self.minimax(game, int(cdepth), True)
+                        #print("   cdepth=", cdepth, " gscore=", gscore, " gmove=", gmove)
+                        cdepth += 1
+                        if self.time_left() < self.TIMER_THRESHOLD:
+                            return gmove
+                else:
+                    gscore, gmove = self.minimax(game, self.search_depth, True)
+                    return gmove
+                
             else:
-                gscore = float("-inf")
-                gmove = (-1,-1)
-                #print("game=", game)
-                #print("search_depth=", self.search_depth)
-                gscore, gmove = self.minimax(game, self.search_depth, True)
-                #print(" gscore=", gscore, " gmove=", gmove)
-                return gmove
+                alpha_init = float("-inf")
+                beta_init = float("inf")
+                if self.iterative:
+                    cdepth = 0
+                    while cdepth < float("inf"):
+                        gscore, gmove = self.alphabeta(game, int(cdepth), alpha_init, beta_init, True)
+                        cdepth += 1
+                        if self.time_left() < self.TIMER_THRESHOLD:
+                            return gmove
+                else:
+                    gscore, gmove = self.alphabeta(game, self.search_depth, alpha_init, beta_init, True)
+                    #print(" gscore=", gscore, " gmove=", gmove)
+                    return gmove
             
-            #gscore, gmove = self.minimax(game, 1, maximizing_player=True)
-
 
         except Timeout:
             # Handle any actions required at timeout, if necessary
             #  going to rely on timeout function to arrive here
-            if gmove == (-1, -1):
-                return legal_moves[0]
-            else:
-                return gmove
-            #pass
+            #  going to rely on some move being available at this stage
+            #   going to assume that enough time for move to be calculated
+                
+            return gmove
 
         # Return the best move from the last completed search iteration
-        
-        
-        #return gmove
-        
-    
+        #  going to rely on above functions to return gmove as the best move
         #raise NotImplementedError
 
     def minimax(self, game, depth, maximizing_player=True):
@@ -232,82 +312,70 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        # TODO: finish this function!
+        # TODO: the below is function of minimax for assignment
+        
         legal_moves = game.get_legal_moves()
         
-        #def depth_search(self, game, depth, maximizing_player=True):
-#            tscore = float("-inf")
-#            move = (-1,-1)
-            
-            #print("legal_moves=", legal_moves, " depth=", depth)
-                    
+        #  if no legal moves or when depth decrement to zero, will have
+        #   reached last layer in depth
+                   
         if not legal_moves or depth <= 0:
-            #print("depth= ", depth, " ", self, " score=", self.score(game, self), " posit=", game.get_player_location(self))
-#            if maximizing_player:
-#                tscore = self.score(game, game.__active_player__)
-#            else:
-#                tscore = self.score(game, game.__inactive_player__)
-            
             if self.time_left() < self.TIMER_THRESHOLD:
                 raise Timeout()            
 
+            #  self is the game_agent.py, which is the CustomPlayer()
+            #   so score always from point of view of CustomPlayer
             tscore = self.score(game, self)
-            #print(game.to_string())
-            #print("depth 0 score=", tscore)
+            #print("depth= ", depth, " ", self, " score=", self.score(game, self), " posit=", game.get_player_location(self))
             return tscore, (-1, -1)
-            #return self.score(game, game.__inactive_player__), (-1,-1)
-            #tscore, move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
-            
-            #tscore = self.score(game, game.__active_player__)
-            #move = legal_moves[0]
-            #return tscore, move
-        #print("depth=", depth)
+
+        #  While haven't reach last layer, going to keep on recursing itself
+        #   and use the minimax function
         while depth > 0:
-            #tscore, move = max([(self.score(game.forecast_move(m), self), m) for m in legal_moves])
-            
             #print("max_player=", maximizing_player)
             #print("depth=", depth, " legal_moves=", legal_moves)
             if self.time_left() < self.TIMER_THRESHOLD:
                 raise Timeout()
-                
+
             if maximizing_player:
                 tscore = float("-inf")
-                move = (-1,-1)
-                for m in legal_moves:
-                    #tboard = game.copy()
-                    #tboard.apply_move(m)
-                    #print("m=", m)
-                    tboard = game.forecast_move(m)
-                    v, move_m = self.minimax(tboard, depth-1, not maximizing_player)
-                    #tdict.update({m : v})
+            else:
+                tscore = float("inf")
+            move = (-1,-1)
+            for m in legal_moves:
+                #  forecase_move will apply the move m
+                tboard = game.forecast_move(m)
+                #  as it applies the minimax for next layer, will flip the maximizing_player bool
+                #   v, move_m is temporary holders as check if better than tscore, move
+                v, move_m = self.minimax(tboard, depth-1, not maximizing_player)
+                if maximizing_player:
                     if v > tscore:
                         tscore = v
                         move = m
-                #move = max(tdict, key=tdict.get)
-                #tscore = tdict[move]
-                #print("depth =", depth, " tscore = ", tscore, " move=", move)
-                return tscore, move
-
-            else:
-                tdict={}
-                tscore = float("inf")
-                move = (-1,-1)
-                for m in legal_moves:
-                    #tboard = game.copy()
-                    #tboard.apply_move(m)
-                    tboard = game.forecast_move(m)
-                    v, move_m = self.minimax(tboard, depth-1, not maximizing_player)
-                    #tdict.update({m : v})
+                else:
                     if v < tscore:
                         tscore = v
                         move = m
-                #move = min(tdict, key=tdict.get)
-                #tscore = tdict[move]
-                #print("depth =", depth, " tscore = ", tscore, " move=", move)
-                return tscore, move
+            return tscore, move
+
+                
+#            if maximizing_player:
+#                    if v > tscore:
+#                        tscore = v
+#                        move = m
+#                return tscore, move
+#
+#            else:
+#                tscore = float("inf")
+#                move = (-1,-1)
+#                for m in legal_moves:
+#                    tboard = game.forecast_move(m)
+#                    v, move_m = self.minimax(tboard, depth-1, not maximizing_player)
+#                    if v < tscore:
+#                        tscore = v
+#                        move = m
+#                return tscore, move
             
-        #depth_search(self, game, depth, maximizing_player=True)
-        
 
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
@@ -352,76 +420,139 @@ class CustomPlayer:
             raise Timeout()
 
         # TODO: finish this function!
+        #  based on psudeo code in AIMA and course github
+        #   create a max_val & min_val function
         
+        legal_moves = game.get_legal_moves()
 
+        if not legal_moves or depth <= 0:
+            tscore = self.score(game, self)
+            return tscore, (-1, -1)
+        
+        if maximizing_player:
+            if self.time_left() < self.TIMER_THRESHOLD:
+                raise Timeout()
 
-        def max_val(self, game, depth, alpha=float("-inf"), beta=float("inf")):               
-            legal_moves = game.get_legal_moves()
-            #print("maxdepth=", depth, " max_val moves=", legal_moves)
-            if not legal_moves or depth <= 0:
-                tscore = self.score(game, game.__active_player__)
-                return tscore, (-1, -1)
-            #else:
             while depth > 0:
                 tscore = float("-inf")
                 v = float("-inf")
-                #m = (-1,-1)
                 move = (-1,-1)
-                #print("legal_moves=", legal_moves)
                 for m in legal_moves:
                     tboard = game.forecast_move(m)
-                    v, move_m = min_val(self, tboard, depth-1, alpha, beta)
-                    #tdict.update({m : v})
+                    #  at this point the alphabeta func could be several layers down
+                    #   going to rely on updated beta passed from prev layer
+                    v, move_m = self.alphabeta(tboard, depth-1, alpha, beta, not maximizing_player)
+                    #print("depth=", depth, " v=", v, " move_m=", move_m, " alpha=", alpha, " beta=", beta)
                     if v > tscore:
                         tscore = v
                         move = m
                     if tscore >= beta:
                         return tscore, move
-                        #break
+                    # this updated alpha will be passed into the next min_val
+                    #  for next m in legal_moves
                     alpha = max(alpha, v)
-                        
-                        
-                    #print("alpha=", alpha)
-          
-                    #move = max(tdict, key=tdict.get)
-                    #tscore = tdict[move]
-                    #tscore = v
                 return tscore, move
+        
+        else:
+            if self.time_left() < self.TIMER_THRESHOLD:
+                raise Timeout()
 
-        def min_val(self, game, depth, alpha=float("-inf"), beta=float("inf")):               
-            legal_moves = game.get_legal_moves()
-            #print("mindepth=", depth, " min_val moves=", legal_moves)
-            if not legal_moves or depth <= 0:
-                tscore = self.score(game, game.__inactive_player__)
-                return tscore, (-1, -1)
-            #else:
             while depth > 0:
                 tscore = float("inf")
                 v = float("inf")
-                #m = (-1,-1)
                 move = (-1,-1)
                 for m in legal_moves:
-                    #tboard = game.copy()
-                    #tboard.apply_move(m)
                     tboard = game.forecast_move(m)
-                    v, move_m = max_val(self, tboard, depth-1, alpha, beta)
-                    #tdict.update({m : v})
+                    v, move_m = self.alphabeta(tboard, depth-1, alpha, beta, not maximizing_player)
+                    #print("depth=", depth, " v=", v, " move_m=", move_m, " alpha=", alpha, " beta=", beta)
+                    #  as this is min layer, find lowest score for this layer
                     if v < tscore:
                         tscore = v
                         move = m
+                    #  in effect, tscore is going to be passed up to next layer above, presumed to be max layer
+                    #   so if less than alpha, will prune it out
                     if tscore <= alpha:
                         return tscore, move
+                    #  similar to the max val above
+                    #  this updated beta will be passed into the next max_val
+                    #  for next m in legal_moves
                     beta = min(beta, v)
-                    #if v < beta:
-                    #    move = m
-                
-                #move = min(tdict, key=tdict.get)
-                #tscore = tdict[move]
                 return tscore, move
-        
-        #print("abdepth=", depth)    
-        abval, abmove = max_val(self, game, depth, float("-inf"), float("inf"))
-        return abval, abmove
+         
+        #   starting node is presumed to be maximizing node as it should be
+        #   CustomPlayer's turn to move and make a decision
+#        abval, abmove = self.alphabeta(game, depth, float("-inf"), float("inf"))
+#        return abval, abmove
+            
+            
+            
+#        #  max_val for maximizing node
+#        #   starting node is presumed to be maximizing node as it should be
+#        #   CustomPlayer's turn to move and make a decision
+#        def max_val(self, game, depth, alpha=float("-inf"), beta=float("inf")):               
+#            if self.time_left() < self.TIMER_THRESHOLD:
+#                raise Timeout()            
+#            legal_moves = game.get_legal_moves()
+#            #print("maxdepth=", depth, " max_val moves=", legal_moves)
+#            if not legal_moves or depth <= 0:
+#                tscore = self.score(game, game.__active_player__)
+#                return tscore, (-1, -1)
+#
+#            while depth > 0:
+#                tscore = float("-inf")
+#                v = float("-inf")
+#                move = (-1,-1)
+#                #print("legal_moves=", legal_moves)
+#                for m in legal_moves:
+#                    tboard = game.forecast_move(m)
+#                    #  at this point the alphabeta func could be several layers down
+#                    #   going to rely on updated beta passed from prev layer
+#                    v, move_m = min_val(self, tboard, depth-1, alpha, beta)
+#                    if v > tscore:
+#                        tscore = v
+#                        move = m
+#                    if tscore >= beta:
+#                        return tscore, move
+#                    # this updated alpha will be passed into the next min_val
+#                    #  for next m in legal_moves
+#                    alpha = max(alpha, v)
+#                        
+#                        
+#                return tscore, move
+#
+#        def min_val(self, game, depth, alpha=float("-inf"), beta=float("inf")):               
+#            if self.time_left() < self.TIMER_THRESHOLD:
+#                raise Timeout()            
+#            legal_moves = game.get_legal_moves()
+#            if not legal_moves or depth <= 0:
+#                tscore = self.score(game, game.__inactive_player__)
+#                return tscore, (-1, -1)
+#            while depth > 0:
+#                tscore = float("inf")
+#                v = float("inf")
+#                move = (-1,-1)
+#                for m in legal_moves:
+#                    tboard = game.forecast_move(m)
+#                    v, move_m = max_val(self, tboard, depth-1, alpha, beta)
+#                    #  as this is min layer, find lowest score for this layer
+#                    if v < tscore:
+#                        tscore = v
+#                        move = m
+#                    #  in effect, tscore is going to be passed up to next layer above, presumed to be max layer
+#                    #   so if less than alpha, will prune it out
+#                    if tscore <= alpha:
+#                        return tscore, move
+#                    #  similar to the max val above
+#                    #  this updated beta will be passed into the next max_val
+#                    #  for next m in legal_moves
+#                    beta = min(beta, v)
+#                return tscore, move
+#        
+#        #print("abdepth=", depth)    
+#        #   starting node is presumed to be maximizing node as it should be
+#        #   CustomPlayer's turn to move and make a decision
+#        abval, abmove = max_val(self, game, depth, float("-inf"), float("inf"))
+#        return abval, abmove
         
 
         
