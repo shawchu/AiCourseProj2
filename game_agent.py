@@ -77,7 +77,7 @@ def custom_score(game, player):
 
 
     #  heuristic number 2
-    #   consider that if end up on outer band of squares 2 squares
+    #   consider that if end up on outer band of squares  within 2 squares
     #   away from edge as being undesirable. Subtract 2 from score if in 
     #   this outer band close to board edge
     def use_h2(game, player):
@@ -116,10 +116,10 @@ def custom_score(game, player):
         blockmoves = len([x for x in own_pmoves if x in opp_pmoves])
         return float(len(own_pmoves) - len(opp_pmoves)) + blockmoves
     
-    
-    return use_h1(game, player)             
+    #  choose the heuristic to use here. Comment out the unused.
+    #return use_h1(game, player)             
     #return use_h2(game, player)             
-    #return use_h3(game, player)             
+    return use_h3(game, player)             
                  
     #raise NotImplementedError
 
@@ -222,20 +222,20 @@ class CustomPlayer:
             #  following is opening book moves for use with heuristic 3
             #  if move is available in centre grid area, truncate the 
             #  legal moves to those only in the centre grid.
-#            centre_area = []
-#            if game.width > 4 and game.width > 4:
-#                cwidth = list(range(2, (game.width - 2)))
-#                cheight = list(range(2, (game.height - 2)))
-#                for i in cwidth:
-#                    for j in cheight:
-#                        centre_area.append((i, j))
-#            
-#                cent_moves = []
-#                for m in legal_moves:
-#                    if m in centre_area:
-#                        cent_moves.append(m)
-#                if len(cent_moves) > 0:
-#                    legal_moves = cent_moves
+            centre_area = []
+            if game.width > 4 and game.width > 4:
+                cwidth = list(range(2, (game.width - 2)))
+                cheight = list(range(2, (game.height - 2)))
+                for i in cwidth:
+                    for j in cheight:
+                        centre_area.append((i, j))
+            
+                cent_moves = []
+                for m in legal_moves:
+                    if m in centre_area:
+                        cent_moves.append(m)
+                if len(cent_moves) > 0:
+                    legal_moves = cent_moves
             
             if self.method == 'minimax':
                 if self.iterative:
@@ -448,7 +448,7 @@ class CustomPlayer:
                         move = m
                     if tscore >= beta:
                         return tscore, move
-                    # this updated alpha will be passed into the next min_val
+                    # this updated alpha will be passed into the next minimising alphabeta
                     #  for next m in legal_moves
                     alpha = max(alpha, v)
                 return tscore, move
@@ -474,7 +474,7 @@ class CustomPlayer:
                     if tscore <= alpha:
                         return tscore, move
                     #  similar to the max val above
-                    #  this updated beta will be passed into the next max_val
+                    #  this updated beta will be passed into the next maximising alphabeta layer
                     #  for next m in legal_moves
                     beta = min(beta, v)
                 return tscore, move
