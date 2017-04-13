@@ -117,9 +117,9 @@ def custom_score(game, player):
         return float(len(own_pmoves) - len(opp_pmoves)) + blockmoves
     
     #  choose the heuristic to use here. Comment out the unused.
-    #return use_h1(game, player)             
+    return use_h1(game, player)             
     #return use_h2(game, player)             
-    return use_h3(game, player)             
+    #return use_h3(game, player)             
                  
     #raise NotImplementedError
 
@@ -222,20 +222,20 @@ class CustomPlayer:
             #  following is opening book moves for use with heuristic 3
             #  if move is available in centre grid area, truncate the 
             #  legal moves to those only in the centre grid.
-            centre_area = []
-            if game.width > 4 and game.width > 4:
-                cwidth = list(range(2, (game.width - 2)))
-                cheight = list(range(2, (game.height - 2)))
-                for i in cwidth:
-                    for j in cheight:
-                        centre_area.append((i, j))
-            
-                cent_moves = []
-                for m in legal_moves:
-                    if m in centre_area:
-                        cent_moves.append(m)
-                if len(cent_moves) > 0:
-                    legal_moves = cent_moves
+#            centre_area = []
+#            if game.width > 4 and game.width > 4:
+#                cwidth = list(range(2, (game.width - 2)))
+#                cheight = list(range(2, (game.height - 2)))
+#                for i in cwidth:
+#                    for j in cheight:
+#                        centre_area.append((i, j))
+#            
+#                cent_moves = []
+#                for m in legal_moves:
+#                    if m in centre_area:
+#                        cent_moves.append(m)
+#                if len(cent_moves) > 0:
+#                    legal_moves = cent_moves
             
             if self.method == 'minimax':
                 if self.iterative:
@@ -479,81 +479,6 @@ class CustomPlayer:
                     beta = min(beta, v)
                 return tscore, move
          
-        #   starting node is presumed to be maximizing node as it should be
-        #   CustomPlayer's turn to move and make a decision
-#        abval, abmove = self.alphabeta(game, depth, float("-inf"), float("inf"))
-#        return abval, abmove
-            
-            
-            
-#        #  max_val for maximizing node
-#        #   starting node is presumed to be maximizing node as it should be
-#        #   CustomPlayer's turn to move and make a decision
-#        def max_val(self, game, depth, alpha=float("-inf"), beta=float("inf")):               
-#            if self.time_left() < self.TIMER_THRESHOLD:
-#                raise Timeout()            
-#            legal_moves = game.get_legal_moves()
-#            #print("maxdepth=", depth, " max_val moves=", legal_moves)
-#            if not legal_moves or depth <= 0:
-#                tscore = self.score(game, game.__active_player__)
-#                return tscore, (-1, -1)
-#
-#            while depth > 0:
-#                tscore = float("-inf")
-#                v = float("-inf")
-#                move = (-1,-1)
-#                #print("legal_moves=", legal_moves)
-#                for m in legal_moves:
-#                    tboard = game.forecast_move(m)
-#                    #  at this point the alphabeta func could be several layers down
-#                    #   going to rely on updated beta passed from prev layer
-#                    v, move_m = min_val(self, tboard, depth-1, alpha, beta)
-#                    if v > tscore:
-#                        tscore = v
-#                        move = m
-#                    if tscore >= beta:
-#                        return tscore, move
-#                    # this updated alpha will be passed into the next min_val
-#                    #  for next m in legal_moves
-#                    alpha = max(alpha, v)
-#                        
-#                        
-#                return tscore, move
-#
-#        def min_val(self, game, depth, alpha=float("-inf"), beta=float("inf")):               
-#            if self.time_left() < self.TIMER_THRESHOLD:
-#                raise Timeout()            
-#            legal_moves = game.get_legal_moves()
-#            if not legal_moves or depth <= 0:
-#                tscore = self.score(game, game.__inactive_player__)
-#                return tscore, (-1, -1)
-#            while depth > 0:
-#                tscore = float("inf")
-#                v = float("inf")
-#                move = (-1,-1)
-#                for m in legal_moves:
-#                    tboard = game.forecast_move(m)
-#                    v, move_m = max_val(self, tboard, depth-1, alpha, beta)
-#                    #  as this is min layer, find lowest score for this layer
-#                    if v < tscore:
-#                        tscore = v
-#                        move = m
-#                    #  in effect, tscore is going to be passed up to next layer above, presumed to be max layer
-#                    #   so if less than alpha, will prune it out
-#                    if tscore <= alpha:
-#                        return tscore, move
-#                    #  similar to the max val above
-#                    #  this updated beta will be passed into the next max_val
-#                    #  for next m in legal_moves
-#                    beta = min(beta, v)
-#                return tscore, move
-#        
-#        #print("abdepth=", depth)    
-#        #   starting node is presumed to be maximizing node as it should be
-#        #   CustomPlayer's turn to move and make a decision
-#        abval, abmove = max_val(self, game, depth, float("-inf"), float("inf"))
-#        return abval, abmove
-        
 
         
         #raise NotImplementedError
